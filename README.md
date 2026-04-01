@@ -31,6 +31,7 @@ CodeMie CLI is the all-in-one AI coding assistant for developers.
 - 🎯 **Profile Management** - Manage work, personal, and team configurations separately.
 - 📊 **Usage Analytics** - Track and analyze AI usage across all agents with detailed insights.
 - 🔧 **CI/CD Workflows** - Automated code review, fixes, and feature implementation.
+- 🔌 **Toolkit Servers** - Expose local filesystem, git, MCP, logs, and email tools to a remote AI orchestrator via NATS. Includes a standalone LangGraph-based interactive coding agent.
 
 Perfect for developers seeking a powerful alternative to GitHub Copilot or Cursor.
 
@@ -254,6 +255,82 @@ codemie opencode-metrics --discover --verbose
 
 Metrics are automatically extracted at session end and synced to the analytics system. Use `codemie analytics` to view comprehensive usage statistics across all agents.
 
+### Toolkit Servers (`codemie plugins`)
+
+Expose local tools to a remote AI orchestrator via NATS, or run a standalone interactive coding agent — no NATS required.
+
+> **Note:** `codemie plugins` (plural) manages NATS toolkit servers. `codemie plugin` (singular) manages user extensions.
+
+**One-time setup:**
+```bash
+# Generate a plugin key and save it
+codemie plugins config generate-key
+
+# Set the NATS server URL
+codemie plugins config set engineUri nats://your-nats-server:4222
+
+# View current config
+codemie plugins config list
+```
+
+**Environment variables (override stored config):**
+
+| Variable | Purpose |
+|---|---|
+| `PLUGIN_KEY` | NATS bearer auth token (required for toolkit servers) |
+| `PLUGIN_ENGINE_URI` | NATS server URL |
+| `PLUGIN_LABEL` | Label appended to tool descriptions |
+
+**Filesystem & Git toolkit:**
+```bash
+codemie plugins development run --repo-path /path/to/repo
+# Options: --write-mode diff|write   --timeout <seconds>
+```
+Exposes: `read_file`, `list_directory`, `recursive_file_retrieval`, `diff_update_file` (SEARCH/REPLACE blocks), `execute_command`, `git`
+
+**MCP server adapter:**
+```bash
+# List built-in MCP servers
+codemie plugins mcp list
+
+# Run one or more servers
+codemie plugins mcp run -s filesystem
+codemie plugins mcp run -s filesystem,puppeteer -e FILE_PATHS=/home/user
+```
+Built-in servers: `filesystem`, `puppeteer`, `jetbrains`
+
+**Log analysis toolkit:**
+```bash
+codemie plugins logs run --base-path /var/log/myapp
+```
+Exposes: `parse_log_file` (regex filter, error-only mode, stats), `read_file`, `list_directory`
+
+**Notification toolkit (email via SMTP):**
+```bash
+export SMTP_HOST=smtp.example.com SMTP_USER=user@example.com SMTP_PASSWORD=secret
+codemie plugins notification run
+```
+Or configure via `codemie plugins config set smtpHost ...`
+
+**Interactive coding agent (local, no NATS required):**
+```bash
+# Uses your active codemie profile for LLM access
+codemie plugins code --allowed-dir /path/to/project
+
+# Explicit LLM settings
+codemie plugins code --base-url https://api.openai.com/v1 --api-key sk-... --model gpt-4o
+
+# Or via env vars
+LLM_SERVICE_BASE_URL=<url> LLM_SERVICE_API_KEY=<key> codemie plugins code
+```
+Tools available to the agent: `read_file`, `write_file`, `edit_file`, `create_directory`, `list_directory`, `directory_tree`, `move_file`, `search_files`, `read_multiple_files`, `list_allowed_directories`, `execute_command`
+
+**Custom system prompt:**
+```bash
+codemie plugins config local-prompt set "You are a TypeScript expert..."
+codemie plugins config local-prompt show
+```
+
 ## Commands
 
 The CodeMie CLI has a rich set of commands for managing agents, configuration, and more.
@@ -268,6 +345,7 @@ codemie profile          # Manage provider profiles
 codemie analytics        # View usage analytics (sessions, tokens, costs, tools)
 codemie workflow <cmd>   # Manage CI/CD workflows
 codemie doctor           # Health check and diagnostics
+codemie plugins          # NATS toolkit servers and interactive coding agent
 ```
 
 For a full command reference, see the [Commands Documentation](docs/COMMANDS.md).

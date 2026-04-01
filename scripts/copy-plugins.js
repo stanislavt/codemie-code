@@ -7,7 +7,7 @@
 
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { rmSync, mkdirSync, cpSync, existsSync } from 'fs';
+import { rmSync, mkdirSync, cpSync, existsSync, copyFileSync, statSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,6 +23,11 @@ const copyConfigs = [
     name: 'Gemini extension',
     src: join(rootDir, 'src/agents/plugins/gemini/extension'),
     dest: join(rootDir, 'dist/agents/plugins/gemini/extension')
+  },
+  {
+    name: 'MCP toolkit servers.json',
+    src: join(rootDir, 'src/toolkit/plugins/mcp/servers.json'),
+    dest: join(rootDir, 'dist/toolkit/plugins/mcp/servers.json')
   }
 ];
 
@@ -44,12 +49,19 @@ for (const config of copyConfigs) {
   }
 
   // Create parent directories
-  console.log(`  - Creating ${config.dest}`);
-  mkdirSync(config.dest, { recursive: true });
+  const srcStat2 = statSync(config.src);
+  const destDir = srcStat2.isDirectory() ? config.dest : dirname(config.dest);
+  console.log(`  - Creating ${destDir}`);
+  mkdirSync(destDir, { recursive: true });
 
-  // Copy recursively
+  // Copy recursively (directory) or as single file
   console.log(`  - Copying from ${config.src}`);
-  cpSync(config.src, config.dest, { recursive: true });
+  const srcStat = statSync(config.src);
+  if (srcStat.isDirectory()) {
+    cpSync(config.src, config.dest, { recursive: true });
+  } else {
+    copyFileSync(config.src, config.dest);
+  }
 
   console.log(`  ✓ ${config.name} copied successfully\n`);
 }
