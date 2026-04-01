@@ -1,0 +1,17 @@
+{
+  "filesystem": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem", "${FILE_PATHS}"],
+    "description": "MCP filesystem server — provides file read/write/list tools"
+  },
+  "puppeteer": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+    "description": "MCP Puppeteer server — provides browser automation tools"
+  },
+  "jetbrains": {
+    "command": "npx",
+    "args": ["-y", "@jetbrains/mcp-proxy"],
+    "description": "JetBrains MCP proxy — exposes IDE tools from IntelliJ/WebStorm etc."
+  }
+}
